@@ -5,9 +5,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Syne', 'sans-serif'],
-        mono: ['DM Mono', 'monospace'],
-        body: ['Outfit', 'sans-serif']
+        display: ['Space Grotesk', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'Consolas', 'monospace'],
+        body: ['Inter', 'system-ui', 'sans-serif']
       },
       colors: {
         // Dark mode colors (default)

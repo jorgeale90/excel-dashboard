@@ -3,8 +3,10 @@
     <!-- Sidebar -->
     <aside
       class="flex flex-col w-60 shrink-0 border-r transition-colors duration-300"
-      :class="isDark ? 'border-surface-border bg-surface-card' : 'border-surface-light-border bg-surface-light-card'"
-      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
+      :class="[
+        isDark ? 'border-surface-border bg-surface-card' : 'border-surface-light-border bg-surface-light-card',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      ]"
     >
       <!-- Logo -->
       <div class="flex items-center gap-3 px-5 py-5 border-b transition-colors duration-300" :class="isDark ? 'border-surface-border' : 'border-surface-light-border'">

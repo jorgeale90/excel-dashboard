@@ -54,9 +54,11 @@
 
 /* Sheet tab active */
 .tab-active {
-  background: #58a6ff18;
   color: #58a6ff;
   border-bottom: 2px solid #58a6ff;
+}
+.dark .tab-active {
+  background: #58a6ff18;
 }
 .light .tab-active {
   background: #58a6ff0d;

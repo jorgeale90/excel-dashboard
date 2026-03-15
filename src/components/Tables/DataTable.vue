@@ -4,22 +4,24 @@
     <div class="flex flex-wrap items-center justify-between gap-3">
       <!-- Search -->
       <div class="relative">
-        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5" :class="isDark ? 'text-gray-500' : 'text-gray-600'" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
         <input
           v-model="search"
           type="text"
           placeholder="Buscar..."
-          class="pl-8 pr-3 py-1.5 bg-surface-hover border border-surface-border rounded-lg text-xs font-mono text-white placeholder-gray-600 focus:outline-none focus:border-accent-blue/50 w-52"
+          class="pl-8 pr-3 py-1.5 border rounded-lg text-xs font-mono placeholder-gray-600 focus:outline-none focus:border-accent-blue/50 w-52"
+          :class="isDark ? 'bg-surface-hover border-surface-border text-white' : 'bg-surface-light-hover border-surface-light-border text-gray-900 placeholder-gray-500'"
         />
       </div>
 
-      <div class="flex items-center gap-2 text-xs text-gray-500 font-mono">
+      <div class="flex items-center gap-2 text-xs font-mono" :class="isDark ? 'text-gray-500' : 'text-gray-600'">
         <span>{{ filteredRows.length }} de {{ rows.length }} filas</span>
         <select
           v-model="pageSize"
-          class="bg-surface-hover border border-surface-border text-white rounded-lg px-2 py-1 text-xs font-mono focus:outline-none"
+          class="border rounded-lg px-2 py-1 text-xs font-mono focus:outline-none"
+          :class="isDark ? 'bg-surface-hover border-surface-border text-white' : 'bg-surface-light-hover border-surface-light-border text-gray-900'"
         >
           <option :value="25">25</option>
           <option :value="50">50</option>
@@ -29,20 +31,21 @@
     </div>
 
     <!-- Table container -->
-    <div class="overflow-auto rounded-xl border border-surface-border max-h-[60vh]">
+    <div class="overflow-auto rounded-xl border max-h-[60vh] transition-colors duration-300" :class="isDark ? 'border-surface-border' : 'border-surface-light-border'">
       <table class="data-table w-full text-xs font-mono border-collapse min-w-max">
         <!-- Head -->
         <thead class="sticky top-0 z-10">
-          <tr class="bg-surface-card border-b border-surface-border">
+          <tr class="border-b transition-colors duration-300" :class="isDark ? 'bg-surface-card border-surface-border' : 'bg-surface-light-card border-surface-light-border'">
             <th
               v-for="col in columns"
               :key="col"
-              class="px-3 py-2.5 text-left text-gray-400 font-body font-semibold tracking-wide whitespace-nowrap cursor-pointer select-none hover:text-white transition-colors"
+              class="px-3 py-2.5 text-left font-body font-semibold tracking-wide whitespace-nowrap cursor-pointer select-none transition-colors"
+              :class="isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
               @click="toggleSort(col)"
             >
               <span class="flex items-center gap-1.5">
                 {{ col }}
-                <span class="text-gray-600">
+                <span class="transition-colors" :class="isDark ? 'text-gray-600' : 'text-gray-500'">
                   <svg v-if="sortCol === col && sortDir === 'asc'" class="w-3 h-3 text-accent-blue" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 15l7-7 7 7"/></svg>
                   <svg v-else-if="sortCol === col && sortDir === 'desc'" class="w-3 h-3 text-accent-blue" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7"/></svg>
                   <svg v-else class="w-3 h-3 opacity-20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>
@@ -55,23 +58,24 @@
         <!-- Body -->
         <tbody>
           <tr v-if="paginatedRows.length === 0">
-            <td :colspan="columns.length" class="text-center py-12 text-gray-600">
+            <td :colspan="columns.length" class="text-center py-12" :class="isDark ? 'text-gray-600' : 'text-gray-500'">
               Sin resultados
             </td>
           </tr>
           <tr
             v-for="(row, i) in paginatedRows"
             :key="i"
-            class="border-b border-surface-border/40 transition-colors duration-100"
+            class="border-b transition-colors duration-100"
+            :class="isDark ? 'border-surface-border/40' : 'border-surface-light-border/40'"
           >
             <td
               v-for="col in columns"
               :key="col"
-              class="px-3 py-2 text-gray-300 whitespace-nowrap max-w-[240px] overflow-hidden text-ellipsis"
-              :class="cellClass(col, row[col])"
+              class="px-3 py-2 whitespace-nowrap max-w-[240px] overflow-hidden text-ellipsis transition-colors"
+              :class="[isDark ? 'text-gray-200' : 'text-gray-700', cellClass(col, row[col])]"
             >
               <template v-if="row[col] === null || row[col] === undefined || row[col] === ''">
-                <span class="text-gray-700">—</span>
+                <span :class="isDark ? 'text-gray-700' : 'text-gray-400'">—</span>
               </template>
               <template v-else>
                 {{ formatCell(col, row[col]) }}
@@ -83,7 +87,7 @@
     </div>
 
     <!-- Pagination -->
-    <div class="flex items-center justify-between text-xs font-mono text-gray-500">
+    <div class="flex items-center justify-between text-xs font-mono" :class="isDark ? 'text-gray-500' : 'text-gray-600'">
       <button
         class="btn-ghost py-1 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
         :disabled="page <= 1"
@@ -103,11 +107,14 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import { useTheme } from '@/composables/useTheme.js'
 
 const props = defineProps({
   columns: { type: Array, required: true },
   rows:    { type: Array, required: true }
 })
+
+const { isDark } = useTheme()
 
 const search   = ref('')
 const sortCol  = ref(null)
