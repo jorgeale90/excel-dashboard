@@ -5,8 +5,8 @@
     <div v-if="!store.hasData" class="flex flex-col items-center justify-center min-h-[70vh]">
       <div class="w-full max-w-lg">
         <div class="mb-8 text-center">
-          <h2 class="font-display text-3xl font-bold text-white">Bienvenido</h2>
-          <p class="text-gray-500 font-body mt-2">Sube tu archivo Excel para comenzar a visualizar los datos</p>
+          <h2 class="font-display text-3xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Bienvenido</h2>
+          <p class="font-body mt-2" :class="isDark ? 'text-gray-500' : 'text-gray-600'">Sube tu archivo Excel para comenzar a visualizar los datos</p>
         </div>
         <ExcelUploader />
       </div>
@@ -18,8 +18,8 @@
       <!-- Header info -->
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="font-display text-xl font-bold text-white">Resumen General</h2>
-          <p class="text-xs text-gray-500 font-mono mt-0.5">{{ store.fileName }}</p>
+          <h2 class="font-display text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Resumen General</h2>
+          <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-500' : 'text-gray-600'">{{ store.fileName }}</p>
         </div>
         <button class="btn-ghost flex items-center gap-2" @click="store.reset()">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -192,15 +192,14 @@
 
 <script setup>
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useExcelStore } from '@/stores/excelStore.js'
+import { useTheme } from '@/composables/useTheme.js'
 import ExcelUploader from '@/components/Excel/ExcelUploader.vue'
 import KpiCard from '@/components/Dashboard/KpiCard.vue'
-import DataTable from '@/components/Tables/DataTable.vue'
 import BalanceChart from '@/components/Dashboard/BalanceChart.vue'
 
-const store  = useExcelStore()
-const router = useRouter()
+const store = useExcelStore()
+const { isDark } = useTheme()
 
 function goToViewer(sheetName) {
   store.setActiveSheet(sheetName)

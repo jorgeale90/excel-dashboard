@@ -15,15 +15,16 @@
     </div>
 
     <div>
-      <p class="text-xs text-gray-500 font-body mb-1">{{ label }}</p>
-      <p class="text-2xl font-display font-bold text-white leading-none">{{ formattedValue }}</p>
-      <p v-if="subtitle" class="text-xs text-gray-600 font-mono mt-1.5">{{ subtitle }}</p>
+      <p class="text-xs font-body mb-1" :class="isDark ? 'text-gray-500' : 'text-gray-600'">{{ label }}</p>
+      <p class="text-2xl font-display font-bold leading-none" :class="isDark ? 'text-white' : 'text-gray-900'">{{ formattedValue }}</p>
+      <p v-if="subtitle" class="text-xs font-mono mt-1.5" :class="isDark ? 'text-gray-600' : 'text-gray-500'">{{ subtitle }}</p>
     </div>
   </div>
 </template>
 
 <script setup>
 import { computed } from 'vue'
+import { useTheme } from '@/composables/useTheme.js'
 
 const props = defineProps({
   label:    { type: String, required: true },
@@ -33,6 +34,8 @@ const props = defineProps({
   subtitle: { type: String, default: null },
   format:   { type: String, default: 'currency' } // currency | number | raw
 })
+
+const { isDark } = useTheme()
 
 const colorMap = {
   blue:  { bg: 'bg-accent-blue/15',   text: 'text-accent-blue'   },

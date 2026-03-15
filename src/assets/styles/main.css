@@ -11,19 +11,25 @@
   ::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
 
   ::selection { background: #58a6ff33; }
+
+  /* Light mode scrollbar */
+  .light ::-webkit-scrollbar-track { background: #f6f8fa; }
+  .light ::-webkit-scrollbar-thumb { background: #d0d7de; border-radius: 3px; }
+  .light ::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
 }
 
 @layer components {
   .card {
-    @apply bg-surface-card border border-surface-border rounded-xl p-5;
+    @apply dark:bg-surface-card dark:border-surface-border bg-surface-light-card border-surface-light-border rounded-xl p-5 transition-colors duration-300;
   }
   .btn-primary {
-    @apply bg-accent-blue text-surface font-body font-semibold px-4 py-2 rounded-lg
+    @apply bg-accent-blue text-white font-body font-semibold px-4 py-2 rounded-lg
            hover:bg-blue-400 transition-colors duration-200 text-sm;
   }
   .btn-ghost {
-    @apply text-gray-400 hover:text-white hover:bg-surface-hover px-3 py-2
-           rounded-lg transition-colors duration-200 text-sm font-body;
+    @apply dark:text-gray-400 dark:hover:text-white dark:hover:bg-surface-hover 
+           text-gray-600 hover:text-gray-900 hover:bg-surface-light-hover
+           px-3 py-2 rounded-lg transition-colors duration-200 text-sm font-body;
   }
   .badge-green  { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono bg-accent-green/10 text-accent-green; }
   .badge-red    { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-mono bg-accent-red/10 text-accent-red; }
@@ -32,13 +38,18 @@
 }
 
 /* Table zebra rows */
-.data-table tbody tr:nth-child(even) { background: #161b2288; }
-.data-table tbody tr:hover { background: #1c223088; }
+.dark .data-table tbody tr:nth-child(even) { background: #161b2288; }
+.dark .data-table tbody tr:hover { background: #1c223088; }
+.light .data-table tbody tr:nth-child(even) { background: #f6f8fa; }
+.light .data-table tbody tr:hover { background: #f3f4f6; }
 
 /* Sidebar active item glow */
 .nav-active {
   background: linear-gradient(90deg, #58a6ff15 0%, transparent 100%);
   border-left: 2px solid #58a6ff;
+}
+.light .nav-active {
+  background: linear-gradient(90deg, #58a6ff08 0%, transparent 100%);
 }
 
 /* Sheet tab active */
@@ -47,11 +58,17 @@
   color: #58a6ff;
   border-bottom: 2px solid #58a6ff;
 }
+.light .tab-active {
+  background: #58a6ff0d;
+}
 
 /* Upload drop zone */
 .drop-zone-active {
   border-color: #58a6ff !important;
   background: #58a6ff08;
+}
+.light .drop-zone-active {
+  background: #58a6ff04;
 }
 
 /* Fade transition */
@@ -61,3 +78,15 @@
 /* Slide up transition */
 .slide-up-enter-active { transition: all 0.25s ease; }
 .slide-up-enter-from { opacity: 0; transform: translateY(12px); }
+
+/* Theme transition */
+* {
+  transition-property: background-color, border-color, color !important;
+  transition-duration: 300ms !important;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Disable transition on theme toggle to avoid flicker */
+.no-transition * {
+  transition: none !important;
+}

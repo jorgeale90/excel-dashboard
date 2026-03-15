@@ -1,20 +1,21 @@
 <template>
-  <div class="flex h-screen overflow-hidden bg-surface font-body">
+  <div class="flex h-screen overflow-hidden font-body transition-colors duration-300" :class="isDark ? 'bg-surface' : 'bg-surface-light'">
     <!-- Sidebar -->
     <aside
-      class="flex flex-col w-60 shrink-0 border-r border-surface-border bg-surface-card"
+      class="flex flex-col w-60 shrink-0 border-r transition-colors duration-300"
+      :class="isDark ? 'border-surface-border bg-surface-card' : 'border-surface-light-border bg-surface-light-card'"
       :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'"
     >
       <!-- Logo -->
-      <div class="flex items-center gap-3 px-5 py-5 border-b border-surface-border">
+      <div class="flex items-center gap-3 px-5 py-5 border-b transition-colors duration-300" :class="isDark ? 'border-surface-border' : 'border-surface-light-border'">
         <div class="w-8 h-8 rounded-lg bg-accent-blue/20 flex items-center justify-center">
           <svg class="w-4 h-4 text-accent-blue" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/>
           </svg>
         </div>
         <div>
-          <p class="font-display text-sm font-bold text-white leading-none">ExcelDash</p>
-          <p class="text-xs text-gray-500 font-mono mt-0.5">Los Mochis 2</p>
+          <p class="font-display text-sm font-bold leading-none" :class="isDark ? 'text-white' : 'text-gray-900'">ExcelDash</p>
+          <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-500' : 'text-gray-600'">Los Mochis 2</p>
         </div>
       </div>
 
@@ -24,8 +25,14 @@
           v-for="item in navItems"
           :key="item.to"
           :to="item.to"
-          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-surface-hover transition-all duration-150"
-          :class="{ 'nav-active !text-accent-blue': $route.path === item.to }"
+          class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150"
+          :class="[
+            $route.path === item.to 
+              ? 'nav-active !text-accent-blue' 
+              : isDark 
+                ? 'text-gray-400 hover:text-white hover:bg-surface-hover'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-surface-light-hover'
+          ]"
         >
           <component :is="item.icon" class="w-4 h-4 shrink-0" />
           {{ item.label }}
@@ -33,20 +40,21 @@
       </nav>
 
       <!-- File info -->
-      <div v-if="store.fileName" class="mx-3 mb-4 px-3 py-3 rounded-lg bg-surface-hover border border-surface-border">
-        <p class="text-xs text-gray-500 mb-1">Archivo cargado</p>
-        <p class="text-xs font-mono text-accent-green truncate">{{ store.fileName }}</p>
-        <p class="text-xs text-gray-600 mt-1">{{ store.activeSheets.length }} hojas activas</p>
+      <div v-if="store.fileName" class="mx-3 mb-4 px-3 py-3 rounded-lg border transition-colors duration-300" :class="isDark ? 'bg-surface-hover border-surface-border' : 'bg-surface-light-hover border-surface-light-border'">
+        <p class="text-xs mb-1" :class="isDark ? 'text-gray-500' : 'text-gray-600'">Archivo cargado</p>
+        <p class="text-xs font-mono truncate text-accent-green">{{ store.fileName }}</p>
+        <p class="text-xs mt-1" :class="isDark ? 'text-gray-600' : 'text-gray-500'">{{ store.activeSheets.length }} hojas activas</p>
       </div>
     </aside>
 
     <!-- Main -->
     <div class="flex-1 flex flex-col overflow-hidden">
       <!-- Topbar -->
-      <header class="flex items-center justify-between px-6 py-3.5 border-b border-surface-border bg-surface-card shrink-0">
+      <header class="flex items-center justify-between px-6 py-3.5 border-b shrink-0 transition-colors duration-300" :class="isDark ? 'border-surface-border bg-surface-card' : 'border-surface-light-border bg-surface-light-card'">
         <div class="flex items-center gap-3">
           <button
-            class="md:hidden p-1.5 rounded-lg hover:bg-surface-hover text-gray-400"
+            class="md:hidden p-1.5 rounded-lg transition-colors duration-150"
+            :class="isDark ? 'hover:bg-surface-hover text-gray-400' : 'hover:bg-surface-light-hover text-gray-600'"
             @click="sidebarOpen = !sidebarOpen"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -54,12 +62,13 @@
             </svg>
           </button>
           <div>
-            <h1 class="font-display text-white font-bold text-lg leading-none">{{ pageTitle }}</h1>
-            <p class="text-xs text-gray-500 font-mono mt-0.5">{{ currentDate }}</p>
+            <h1 class="font-display font-bold text-lg leading-none" :class="isDark ? 'text-white' : 'text-gray-900'">{{ pageTitle }}</h1>
+            <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-500' : 'text-gray-600'">{{ currentDate }}</p>
           </div>
         </div>
 
         <div class="flex items-center gap-2">
+          <ThemeToggle />
           <span v-if="store.loading" class="badge-blue">
             <svg class="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 12a8 8 0 018-8v8H4z"/></svg>
             Procesando...
@@ -88,12 +97,15 @@
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useExcelStore } from '@/stores/excelStore.js'
+import { useTheme } from '@/composables/useTheme.js'
 import IconGrid from '@/components/icons/IconGrid.vue'
 import IconTable from '@/components/icons/IconTable.vue'
+import ThemeToggle from '@/components/ui/ThemeToggle.vue'
 
 const store = useExcelStore()
 const route = useRoute()
 const sidebarOpen = ref(false)
+const { isDark } = useTheme()
 
 const navItems = [
   { to: '/',       label: 'Dashboard',    icon: IconGrid  },

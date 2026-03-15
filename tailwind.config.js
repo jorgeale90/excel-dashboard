@@ -10,11 +10,19 @@ export default {
         body: ['Outfit', 'sans-serif']
       },
       colors: {
+        // Dark mode colors (default)
         surface: {
           DEFAULT: '#0d1117',
           card:    '#161b22',
           hover:   '#1c2230',
           border:  '#21262d'
+        },
+        // Light mode colors
+        'surface-light': {
+          DEFAULT: '#ffffff',
+          card:    '#f6f8fa',
+          hover:   '#f3f4f6',
+          border:  '#e5e7eb'
         },
         accent: {
           green:  '#39d353',
