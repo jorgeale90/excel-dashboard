@@ -5,6 +5,8 @@
       :viewBox="`0 0 ${W} ${H}`"
       preserveAspectRatio="none"
       class="w-full h-full"
+      @mousemove="handleMouseMove"
+      @mouseleave="hoveredPoint = null"
     >
       <defs>
         <linearGradient id="grad-ingreso" x1="0" y1="0" x2="0" y2="1">
@@ -76,6 +78,30 @@
         text-anchor="middle"
         font-family="DM Mono, monospace"
       >{{ p.label }}</text>
+      <!-- Interactive hover point -->
+      <circle
+        v-if="hoveredPoint"
+        :cx="hoveredPoint.x"
+        :cy="hoveredPoint.y"
+        r="4"
+        fill="#58a6ff"
+        stroke="#fff"
+        stroke-width="2"
+      />
+      
+      <!-- Tooltip -->
+      <div
+        v-if="hoveredPoint"
+        class="absolute pointer-events-none transform -translate-x-1/2 -translate-y-full"
+        :style="{ left: hoveredPoint.x + 'px', top: (hoveredPoint.y - 10) + 'px' }"
+      >
+        <div class="px-2 py-1 rounded text-xs font-mono whitespace-nowrap" 
+             :class="isDark ? 'bg-surface-card border border-surface-border text-gray-300' : 'bg-surface-light-card border border-surface-light-border text-gray-700'">
+          <div>{{ hoveredPoint.date }}</div>
+          <div class="text-accent-green">Ingreso: {{ formatMXN(hoveredPoint.ingreso) }}</div>
+          <div class="text-accent-red">Egreso: {{ formatMXN(hoveredPoint.out) }}</div>
+        </div>
+      </div>
     </svg>
 
     <!-- Empty state -->
@@ -86,11 +112,15 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { useTheme } from '@/composables/useTheme.js'
 
 const props = defineProps({
   data: { type: Array, default: () => [] } // [{ fecha, ingreso, out, balance }]
 })
+
+const { isDark } = useTheme()
+const hoveredPoint = ref(null)
 
 // SVG canvas dimensions
 const W = 700, H = 200, PAD_L = 46, PAD_R = 12, PAD_T = 10, PAD_B = 18
@@ -158,5 +188,36 @@ const labelPoints = computed(() => {
 function formatK(v) {
   if (v >= 1000) return `${(v / 1000).toFixed(0)}k`
   return String(v)
+}
+
+function formatMXN(v) {
+  return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(v)
+}
+
+function handleMouseMove(e) {
+  const rect = e.currentTarget.getBoundingClientRect()
+  const x = (e.clientX - rect.left) * (W / rect.width)
+  const y = (e.clientY - rect.top) * (H / rect.height)
+  
+  // Find closest point
+  let minDist = Infinity
+  let closestPoint = null
+  
+  points.value.forEach((point, i) => {
+    const px = scaleX(i)
+    const py = scaleY(point.ingreso)
+    const dist = Math.sqrt((x - px) ** 2 + (y - py) ** 2)
+    
+    if (dist < minDist && dist < 20) {
+      minDist = dist
+      closestPoint = {
+        x: px,
+        y: py,
+        ...point
+      }
+    }
+  })
+  
+  hoveredPoint.value = closestPoint
 }
 </script>

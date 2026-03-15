@@ -1,51 +1,50 @@
 <template>
-  <div
-    class="relative border-2 border-dashed rounded-2xl p-12 flex flex-col items-center gap-5 transition-all duration-200 cursor-pointer"
-    :class="[
-      isDark ? 'border-surface-border' : 'border-surface-light-border',
-      { 'drop-zone-active': isDragging }
-    ]"
+  <div class="relative group"
     @dragover.prevent="isDragging = true"
     @dragleave.prevent="isDragging = false"
     @drop.prevent="onDrop"
-    @click="fileInput.click()"
   >
-    <!-- Icon -->
-    <div class="w-16 h-16 rounded-2xl border flex items-center justify-center transition-transform duration-200"
-         :class="[
-           isDark ? 'bg-surface-hover border-surface-border' : 'bg-surface-light-hover border-surface-light-border',
-           { 'scale-110 border-accent-blue/50': isDragging }
-         ]">
-      <svg class="w-8 h-8 transition-colors duration-200" 
-           :class="isDragging ? '!text-accent-blue' : (isDark ? 'text-gray-500' : 'text-gray-600')"
-           fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
-      </svg>
-    </div>
-
-    <div class="text-center">
-      <p class="font-display font-bold text-lg" :class="isDark ? 'text-white' : 'text-gray-900'">
-        {{ isDragging ? 'Suelta el archivo aquí' : 'Sube tu archivo Excel' }}
-      </p>
-      <p class="text-sm mt-1 font-body" :class="isDark ? 'text-gray-500' : 'text-gray-600'">Arrastra un .xlsx o haz click para seleccionar</p>
-    </div>
-
-    <!-- Supported formats -->
-    <div class="flex items-center gap-3">
-      <span class="badge-blue">.xlsx</span>
-      <span class="badge-blue">.xls</span>
-    </div>
-
-    <!-- Error message -->
-    <transition name="fade">
-      <div v-if="localError" class="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent-red/10 border border-accent-red/20 text-accent-red text-sm">
-        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+    <div
+      class="relative flex flex-col items-center justify-center gap-3 p-6 sm:p-8 rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer"
+      :class="[
+        isDragging 
+          ? 'border-accent-blue bg-accent-blue/5' 
+          : isDark 
+            ? 'border-surface-border bg-surface-hover hover:border-gray-600' 
+            : 'border-surface-light-border bg-surface-light-hover hover:border-gray-400'
+      ]"
+      @click="$refs.fileInput.click()"
+    >
+      <!-- Upload icon -->
+      <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center transition-colors duration-300"
+           :class="isDragging ? 'bg-accent-blue text-accent-blue' : isDark ? 'bg-surface-card text-gray-400' : 'bg-surface-light-card text-gray-500'">
+        <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
         </svg>
-        {{ localError }}
       </div>
-    </transition>
+
+      <div class="text-center">
+        <p class="text-sm sm:text-base font-display font-medium mb-1" :class="isDark ? 'text-white' : 'text-gray-900'">
+          {{ isDragging ? 'Suelta el archivo aquí' : 'Arrastra tu archivo Excel aquí' }}
+        </p>
+        <p class="text-xs sm:text-sm font-mono" :class="isDark ? 'text-gray-500' : 'text-gray-600'">
+          o haz click para seleccionar
+        </p>
+        <p class="text-xs font-mono mt-2" :class="isDark ? 'text-gray-600' : 'text-gray-500'">
+          Máximo 50 MB • .xlsx, .xls
+        </p>
+      </div>
+    </div>
+
+    <!-- Loading overlay -->
+    <div v-if="store.loading" class="absolute inset-0 bg-surface/80 flex items-center justify-center rounded-2xl">
+      <div class="flex flex-col items-center gap-3">
+        <svg class="w-8 h-8 text-accent-blue animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+        <p class="text-sm font-mono" :class="isDark ? 'text-gray-400' : 'text-gray-600'">Procesando archivo...</p>
+      </div>
+    </div>
 
     <input ref="fileInput" type="file" accept=".xlsx,.xls" class="hidden" @change="onFileChange" />
   </div>
@@ -76,8 +75,12 @@ function validate(file) {
 async function processFile(file) {
   localError.value = validate(file)
   if (localError.value) return
-  await store.loadExcel(file)
-  if (store.error) localError.value = store.error
+  
+  try {
+    await store.loadExcel(file)
+  } catch (error) {
+    localError.value = error.message || 'Error al procesar el archivo'
+  }
 }
 
 function onFileChange(e) {

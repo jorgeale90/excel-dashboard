@@ -1,5 +1,5 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-4 sm:space-y-6">
 
     <!-- ── Upload state ── -->
     <div v-if="!store.hasData" class="flex flex-col items-center justify-center min-h-[70vh]">
@@ -16,21 +16,22 @@
     <template v-else>
 
       <!-- Header info -->
-      <div class="flex items-center justify-between">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 class="font-display text-xl font-bold" :class="isDark ? 'text-white' : 'text-gray-900'">Resumen General</h2>
           <p class="text-xs font-mono mt-0.5" :class="isDark ? 'text-gray-500' : 'text-gray-600'">{{ store.fileName }}</p>
         </div>
-        <button class="btn-ghost flex items-center gap-2" @click="store.reset()">
+        <button class="btn-ghost text-xs" @click="store.reset()">
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
           </svg>
-          Cargar otro
+          <span class="hidden sm:inline ml-2">Cargar otro</span>
+          <span class="sm:hidden">Nuevo</span>
         </button>
       </div>
 
       <!-- ── KPI Cards ── -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         <KpiCard
           label="Total Ingreso"
           :value="store.kpis.totalIngreso"
@@ -86,10 +87,10 @@
       </div>
 
       <!-- ── Charts row ── -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
         <!-- Balance diario chart -->
-        <div class="card lg:col-span-2">
-          <div class="flex items-center justify-between mb-4">
+        <div class="card xl:col-span-2">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
             <div>
               <p class="font-display font-bold text-white">Balance Diario</p>
               <p class="text-xs text-gray-500 font-mono mt-0.5">Ingreso vs Out por fecha</p>
@@ -197,6 +198,7 @@ import { useTheme } from '@/composables/useTheme.js'
 import ExcelUploader from '@/components/Excel/ExcelUploader.vue'
 import KpiCard from '@/components/Dashboard/KpiCard.vue'
 import BalanceChart from '@/components/Dashboard/BalanceChart.vue'
+import DataTable from '@/components/Tables/DataTable.vue'
 
 const store = useExcelStore()
 const { isDark } = useTheme()

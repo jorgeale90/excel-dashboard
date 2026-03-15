@@ -11,7 +11,7 @@
           v-model="search"
           type="text"
           placeholder="Buscar..."
-          class="pl-8 pr-3 py-1.5 border rounded-lg text-xs font-mono placeholder-gray-600 focus:outline-none focus:border-accent-blue/50 w-52"
+          class="pl-8 pr-3 py-1.5 border rounded-lg text-xs font-mono placeholder-gray-600 focus:outline-none focus:border-accent-blue/50 w-full sm:w-52"
           :class="isDark ? 'bg-surface-hover border-surface-border text-white' : 'bg-surface-light-hover border-surface-light-border text-gray-900 placeholder-gray-500'"
         />
       </div>
@@ -31,17 +31,29 @@
     </div>
 
     <!-- Table container -->
-    <div class="overflow-auto rounded-xl border max-h-[60vh] transition-colors duration-300" :class="isDark ? 'border-surface-border' : 'border-surface-light-border'">
-      <table class="data-table w-full text-xs font-mono border-collapse min-w-max">
+    <div 
+      class="overflow-auto rounded-xl border max-h-[50vh] sm:max-h-[60vh] transition-colors duration-300" 
+      :class="isDark ? 'border-surface-border' : 'border-surface-light-border'"
+      tabindex="0"
+      @keydown="handleKeydown"
+      role="grid"
+      aria-label="Tabla de datos"
+      :aria-rowcount="paginatedRows.length + 1"
+      :aria-colcount="columns.length"
+    >
+      <table class="data-table w-full text-xs font-mono border-collapse min-w-[600px]">
         <!-- Head -->
         <thead class="sticky top-0 z-10">
-          <tr class="border-b transition-colors duration-300" :class="isDark ? 'bg-surface-card border-surface-border' : 'bg-surface-light-card border-surface-light-border'">
+          <tr class="border-b transition-colors duration-300" :class="isDark ? 'bg-surface-card border-surface-border' : 'bg-surface-light-card border-surface-light-border'" role="row">
             <th
-              v-for="col in columns"
+              v-for="(col, index) in columns"
               :key="col"
               class="px-3 py-2.5 text-left font-body font-semibold tracking-wide whitespace-nowrap cursor-pointer select-none transition-colors"
               :class="isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'"
               @click="toggleSort(col)"
+              role="columnheader"
+              :aria-sort="sortCol === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'"
+              :aria-label="`Columna ${col}, ${sortCol === col ? (sortDir === 'asc' ? 'ordenada ascendente' : 'ordenada descendente') : 'click para ordenar'}`"
             >
               <span class="flex items-center gap-1.5">
                 {{ col }}
@@ -67,12 +79,20 @@
             :key="i"
             class="border-b transition-colors duration-100"
             :class="isDark ? 'border-surface-border/40' : 'border-surface-light-border/40'"
+            role="row"
+            :aria-rowindex="i + 2"
           >
             <td
-              v-for="col in columns"
+              v-for="(col, colIndex) in columns"
               :key="col"
-              class="px-3 py-2 whitespace-nowrap max-w-[240px] overflow-hidden text-ellipsis transition-colors"
+              class="px-2 sm:px-3 py-2 whitespace-nowrap max-w-[150px] sm:max-w-[240px] overflow-hidden text-ellipsis transition-colors"
               :class="[isDark ? 'text-gray-200' : 'text-gray-700', cellClass(col, row[col])]"
+              :data-cell="`${i}-${colIndex}`"
+              :tabindex="focusedCell.row === i && focusedCell.col === colIndex ? 0 : -1"
+              @focus="focusedCell = { row: i, col: colIndex }"
+              role="gridcell"
+              :aria-colindex="colIndex + 1"
+              :aria-label="`${col}: ${formatCell(col, row[col]) || 'vacío'}`"
             >
               <template v-if="row[col] === null || row[col] === undefined || row[col] === ''">
                 <span :class="isDark ? 'text-gray-700' : 'text-gray-400'">—</span>
@@ -87,17 +107,17 @@
     </div>
 
     <!-- Pagination -->
-    <div class="flex items-center justify-between text-xs font-mono" :class="isDark ? 'text-gray-500' : 'text-gray-600'">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-xs font-mono gap-2 sm:gap-0" :class="isDark ? 'text-gray-500' : 'text-gray-600'">
       <button
-        class="btn-ghost py-1 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+        class="btn-ghost py-1 px-2 disabled:opacity-30 disabled:cursor-not-allowed order-2 sm:order-1"
         :disabled="page <= 1"
         @click="page--"
       >← Anterior</button>
 
-      <span>Pág {{ page }} / {{ totalPages }}</span>
+      <span class="order-1 sm:order-2">Pág {{ page }} / {{ totalPages }}</span>
 
       <button
-        class="btn-ghost py-1 px-2 disabled:opacity-30 disabled:cursor-not-allowed"
+        class="btn-ghost py-1 px-2 disabled:opacity-30 disabled:cursor-not-allowed order-3"
         :disabled="page >= totalPages"
         @click="page++"
       >Siguiente →</button>
@@ -106,8 +126,9 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
 import { useTheme } from '@/composables/useTheme.js'
+import { usePreferences } from '@/composables/usePreferences.js'
 
 const props = defineProps({
   columns: { type: Array, required: true },
@@ -115,15 +136,32 @@ const props = defineProps({
 })
 
 const { isDark } = useTheme()
+const { tablePageSize, tableSort, tableFilters } = usePreferences()
+
+// Keyboard navigation
+const focusedCell = ref({ row: -1, col: -1 })
+const tableContainer = ref(null)
 
 const search   = ref('')
-const sortCol  = ref(null)
-const sortDir  = ref('asc')
+const sortCol  = ref(tableSort.value?.column || null)
+const sortDir  = ref(tableSort.value?.direction || 'asc')
 const page     = ref(1)
-const pageSize = ref(50)
+const pageSize = ref(tablePageSize.value || 50)
 
-// Reset page when search changes
-watch(search, () => { page.value = 1 })
+// Watch for changes and save to preferences
+watch(pageSize, (newSize) => {
+  tablePageSize.value = newSize
+  page.value = 1
+})
+
+watch([sortCol, sortDir], () => {
+  tableSort.value = { column: sortCol.value, direction: sortDir.value }
+})
+
+watch(search, () => { 
+  page.value = 1 
+  tableFilters.value = { ...tableFilters.value, search: search.value }
+})
 
 const CURRENCY_KEYWORDS = ['ingreso', 'egreso', 'saldo', 'balance', 'monto', 'out', 'promo', 'comision', 'retiro', 'deposito']
 const DATE_KEYWORDS     = ['fecha', 'date']
@@ -138,14 +176,86 @@ function isLikelyDate(col) {
 
 function formatCell(col, val) {
   if (val === null || val === undefined) return ''
-  const num = Number(val)
-  if (isLikelyDate(col) && typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}/)) {
-    return val.split('T')[0].split(' ')[0]
+  if (typeof val === 'string') return val.trim()
+  if (typeof val === 'number') {
+    if (isLikelyCurrency(col)) {
+      return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(val)
+    }
+    return val.toLocaleString('es-MX')
   }
-  if (isLikelyCurrency(col) && !isNaN(num) && val !== '') {
-    return new Intl.NumberFormat('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(num)
+  if (val instanceof Date) {
+    return val.toLocaleDateString('es-MX')
   }
-  return val
+  return String(val).trim()
+}
+
+function handleKeydown(e) {
+  const { row, col } = focusedCell.value
+  const maxRow = paginatedRows.value.length - 1
+  const maxCol = props.columns.length - 1
+  
+  switch(e.key) {
+    case 'ArrowUp':
+      e.preventDefault()
+      if (row > 0) {
+        focusedCell.value = { row: row - 1, col }
+        scrollToCell(row - 1, col)
+      }
+      break
+    case 'ArrowDown':
+      e.preventDefault()
+      if (row < maxRow) {
+        focusedCell.value = { row: row + 1, col }
+        scrollToCell(row + 1, col)
+      }
+      break
+    case 'ArrowLeft':
+      e.preventDefault()
+      if (col > 0) {
+        focusedCell.value = { row, col: col - 1 }
+        scrollToCell(row, col - 1)
+      }
+      break
+    case 'ArrowRight':
+      e.preventDefault()
+      if (col < maxCol) {
+        focusedCell.value = { row, col: col + 1 }
+        scrollToCell(row, col + 1)
+      }
+      break
+    case 'Home':
+      e.preventDefault()
+      focusedCell.value = { row: 0, col: 0 }
+      scrollToCell(0, 0)
+      break
+    case 'End':
+      e.preventDefault()
+      focusedCell.value = { row: maxRow, col: maxCol }
+      scrollToCell(maxRow, maxCol)
+      break
+    case 'PageUp':
+      e.preventDefault()
+      const newRowUp = Math.max(0, row - pageSize.value)
+      focusedCell.value = { row: newRowUp, col }
+      scrollToCell(newRowUp, col)
+      break
+    case 'PageDown':
+      e.preventDefault()
+      const newRowDown = Math.min(maxRow, row + pageSize.value)
+      focusedCell.value = { row: newRowDown, col }
+      scrollToCell(newRowDown, col)
+      break
+  }
+}
+
+function scrollToCell(row, col) {
+  nextTick(() => {
+    const cell = document.querySelector(`[data-cell="${row}-${col}"]`)
+    if (cell) {
+      cell.focus()
+      cell.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }
+  })
 }
 
 function cellClass(col, val) {

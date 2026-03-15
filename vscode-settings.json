@@ -1,0 +1,14 @@
+{
+  "css.validate": false,
+  "stylelint.validate": ["css"],
+  "files.associations": {
+    "*.css": "tailwindcss"
+  },
+  "editor.quickSuggestions": {
+    "strings": true
+  },
+  "tailwindCSS.includeLanguages": {
+    "vue": "html",
+    "javascript": "javascript"
+  }
+}
